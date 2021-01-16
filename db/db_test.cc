@@ -23,6 +23,7 @@
 #include <alloca.h>
 #endif
 
+#include "rocksdb/utilities/transaction_db.h"
 #include "cache/lru_cache.h"
 #include "db/blob/blob_index.h"
 #include "db/db_impl/db_impl.h"
@@ -6692,6 +6693,42 @@ TEST_F(DBTest, WALSkip) {
   Reopen(options);
   std::string value;
   db_->Get(ReadOptions(), "cc", &value);
+  printf("%s\n", value.c_str());
+}
+
+TEST_F(DBTest, PreparedCfdLogNumber) {
+  Close();
+
+  Options opt = CurrentOptions();
+  opt.allow_2pc = true;
+
+  TransactionDB* db = nullptr;
+  TransactionDB::Open(opt, TransactionDBOptions(), dbname_, &db);
+
+  Transaction* tx = db->BeginTransaction(WriteOptions());
+  ASSERT_OK(tx->SetName("tx0"));
+  ASSERT_OK(tx->Put("a", "b"));
+  ASSERT_OK(tx->Prepare());
+  delete tx;
+
+  ASSERT_OK(db->Put(WriteOptions(), "a", "c"));
+  ASSERT_OK(db->Flush(FlushOptions()));
+  // A new WAL is created.
+
+  ASSERT_OK(db->Put(WriteOptions(), "a", "d"));
+  ASSERT_OK(db->Flush(FlushOptions()));
+
+  // ASSERT_OK(tx->Commit());
+  // delete tx;
+
+  ASSERT_OK(db->Close());
+  delete db;
+
+  // Suppose first log is 1, second log is 2,
+  // now, cf0->GetLogNumber() == 1 ? 2
+  Reopen(opt);
+  std::string value;
+  db_->Get(ReadOptions(), "a", &value);
   printf("%s\n", value.c_str());
 }
 
