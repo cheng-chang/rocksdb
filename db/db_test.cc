@@ -6732,6 +6732,40 @@ TEST_F(DBTest, PreparedCfdLogNumber) {
   printf("%s\n", value.c_str());
 }
 
+TEST_F(DBTest, TxRecover) {
+  Close();
+
+  Options opt = CurrentOptions();
+  opt.allow_2pc = true;
+
+  TransactionDB* db = nullptr;
+  TransactionDB::Open(opt, TransactionDBOptions(), dbname_, &db);
+
+  Transaction* tx = db->BeginTransaction(WriteOptions());
+  ASSERT_OK(tx->SetName("tx0"));
+  ASSERT_OK(tx->Put("a", "b"));
+  ASSERT_OK(tx->Prepare());
+  delete tx;
+
+  ASSERT_OK(db->GetBaseDB()->Put(WriteOptions(), "a", "c"));
+
+  ASSERT_OK(db->Close());
+
+  printf("before reopen\n");
+  ASSERT_OK(TransactionDB::Open(opt, TransactionDBOptions(), dbname_, &db));
+  printf("after reopen\n");
+
+  std::string value;
+  ASSERT_OK(db->Get(ReadOptions(), "a", &value));
+  ASSERT_EQ(value, "c");
+
+  tx = db->GetTransactionByName("tx0");
+  ASSERT_OK(tx->Commit());
+
+  ASSERT_OK(db->Get(ReadOptions(), "a", &value));
+  ASSERT_EQ(value, "b");
+}
+
 TEST_F(DBTest, MemoryUsageWithMaxWriteBufferSizeToMaintain) {
   Options options = CurrentOptions();
   options.max_write_buffer_size_to_maintain = 10000;
