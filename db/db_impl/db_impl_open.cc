@@ -939,6 +939,8 @@ Status DBImpl::RecoverLogFiles(const std::vector<uint64_t>& wal_numbers,
         }
       }
 
+      printf("wal_filter = %p\n", immutable_db_options_.wal_filter);
+
 #ifndef ROCKSDB_LITE
       if (immutable_db_options_.wal_filter != nullptr) {
         WriteBatch new_batch;
@@ -1035,6 +1037,8 @@ Status DBImpl::RecoverLogFiles(const std::vector<uint64_t>& wal_numbers,
         reporter.Corruption(record.size(), status);
         continue;
       }
+
+      printf("has_valid_writes = %d\n", has_valid_writes);
 
       if (has_valid_writes && !read_only) {
         // we can do this because this is called before client has access to the
@@ -1151,7 +1155,9 @@ Status DBImpl::RecoverLogFiles(const std::vector<uint64_t>& wal_numbers,
       assert(iter != version_edits.end());
       VersionEdit* edit = &iter->second;
 
+      printf("1 cfd->GetLogNumber = %lld, max=%lld\n", cfd->GetLogNumber(), max_wal_number);
       if (cfd->GetLogNumber() > max_wal_number) {
+        printf("2 cfd->GetLogNumber = %lld, max=%lld\n", cfd->GetLogNumber(), max_wal_number);
         // Column family cfd has already flushed the data
         // from all wals. Memtable has to be empty because
         // we filter the updates based on wal_number
@@ -1164,6 +1170,7 @@ Status DBImpl::RecoverLogFiles(const std::vector<uint64_t>& wal_numbers,
       TEST_SYNC_POINT_CALLBACK(
           "DBImpl::RecoverLogFiles:BeforeFlushFinalMemtable", /*arg=*/nullptr);
 
+      printf("mem first seq = %llu\n", cfd->mem()->GetFirstSequenceNumber());
       // flush the final memtable (if non-empty)
       if (cfd->mem()->GetFirstSequenceNumber() != 0) {
         // If flush happened in the middle of recovery (e.g. due to memtable

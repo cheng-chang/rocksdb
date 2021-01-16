@@ -66,6 +66,7 @@
 #include "util/rate_limiter.h"
 #include "util/string_util.h"
 #include "utilities/merge_operators.h"
+#include "utilities/merge_operators/string_append/stringappend.h"
 
 namespace ROCKSDB_NAMESPACE {
 
@@ -74,7 +75,9 @@ namespace ROCKSDB_NAMESPACE {
 // If fsync needs to be covered in a test, put it in other places.
 class DBTest : public DBTestBase {
  public:
-  DBTest() : DBTestBase("/db_test", /*env_do_fsync=*/false) {}
+  DBTest() : DBTestBase("/db_test", /*env_do_fsync=*/false) {
+    printf("dbname = %s\n", dbname_.c_str());
+  }
 };
 
 class DBTestWithParam
@@ -6674,6 +6677,22 @@ TEST_F(DBTest, CreationTimeOfOldestFile) {
   ASSERT_EQ(s3, Status::NotSupported());
 
   ROCKSDB_NAMESPACE::SyncPoint::GetInstance()->DisableProcessing();
+}
+
+TEST_F(DBTest, WALSkip) {
+  Options options = CurrentOptions();
+  options.merge_operator.reset(new StringAppendOperator(';'));
+  Reopen(options);
+  db_->Merge(WriteOptions(), "cc", "a");
+  db_->Merge(WriteOptions(), "cc", "b");
+  Flush();
+
+  printf("reopen\n");
+
+  Reopen(options);
+  std::string value;
+  db_->Get(ReadOptions(), "cc", &value);
+  printf("%s\n", value.c_str());
 }
 
 TEST_F(DBTest, MemoryUsageWithMaxWriteBufferSizeToMaintain) {

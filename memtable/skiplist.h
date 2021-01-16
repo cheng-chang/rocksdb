@@ -433,6 +433,7 @@ SkipList<Key, Comparator>::SkipList(const Comparator cmp, Allocator* allocator,
 
 template<typename Key, class Comparator>
 void SkipList<Key, Comparator>::Insert(const Key& key) {
+  printf("skiplist insert\n");
   // fast path for sequential insertion
   if (!KeyIsAfterNode(key, prev_[0]->NoBarrier_Next(0)) &&
       (prev_[0] == head_ || KeyIsAfterNode(key, prev_[0]))) {

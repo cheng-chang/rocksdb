@@ -488,6 +488,7 @@ Status MemTable::Add(SequenceNumber s, ValueType type,
                      const Slice& key, /* user key */
                      const Slice& value, bool allow_concurrent,
                      MemTablePostProcessInfo* post_process_info, void** hint) {
+  printf("MemTable::Add seq=%llu key=%s\n", s, key.data());
   // Format of an entry is concatenation of:
   //  key_size     : varint32 of internal_key.size()
   //  key bytes    : char[internal_key.size()]
