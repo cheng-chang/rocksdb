@@ -560,7 +560,7 @@ class VersionEdit {
   int max_level_ = 0;
   std::string db_id_;
   std::string comparator_;
-  uint64_t log_number_ = 0;
+  uint64_t log_number_ = 1;
   uint64_t prev_log_number_ = 0;
   uint64_t next_file_number_ = 0;
   uint32_t max_column_family_ = 0;
@@ -569,7 +569,7 @@ class VersionEdit {
   SequenceNumber last_sequence_ = 0;
   bool has_db_id_ = false;
   bool has_comparator_ = false;
-  bool has_log_number_ = false;
+  bool has_log_number_ = true;
   bool has_prev_log_number_ = false;
   bool has_next_file_number_ = false;
   bool has_max_column_family_ = false;

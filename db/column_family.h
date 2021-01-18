@@ -308,7 +308,8 @@ class ColumnFamilyData {
   int NumberLevels() const { return ioptions_.num_levels; }
 
   void SetLogNumber(uint64_t log_number) { log_number_ = log_number; }
-  uint64_t GetLogNumber() const { return log_number_; }
+  // uint64_t GetLogNumber() const { return log_number_; }
+  uint64_t GetLogNumber() const { return 1; }
 
   void SetFlushReason(FlushReason flush_reason) {
     flush_reason_ = flush_reason;

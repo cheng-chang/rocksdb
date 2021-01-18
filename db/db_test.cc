@@ -6694,6 +6694,7 @@ TEST_F(DBTest, WALSkip) {
   std::string value;
   db_->Get(ReadOptions(), "cc", &value);
   printf("%s\n", value.c_str());
+  ASSERT_EQ(value, "a;b");
 }
 
 TEST_F(DBTest, PreparedCfdLogNumber) {
